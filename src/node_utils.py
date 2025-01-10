@@ -30,3 +30,82 @@ def extract_markdown_links(text):
     # Exclude image links by ensuring the link doesn't start with '!'
     pattern = r'(?<!!)\[(.*?)\]\((.*?)\)'
     return re.findall(pattern, text)
+
+
+def split_nodes_image(old_nodes):
+    new_nodes = []
+    image_pattern = r'!\[([^\]]+)\]\(([^)]+)\)'
+
+    for node in old_nodes:
+        if node.text_type != TextType.NORMAL:
+            new_nodes.append(node)
+            continue
+
+        text = node.text
+        matches = list(re.finditer(image_pattern, text))
+        if not matches:
+            new_nodes.append(node)
+            continue
+
+        last_index = 0
+        for match in matches:
+            start, end = match.span()
+            alt_text, url = match.groups()
+
+            # Add the text before the match
+            if start > last_index:
+                new_nodes.append(TextNode(text[last_index:start], TextType.NORMAL))
+
+            # Add the image node
+            new_nodes.append(TextNode(alt_text, TextType.IMAGE, url))
+
+            # Update the last index
+            last_index = end
+
+        # Add any remaining text after the last match
+        if last_index < len(text):
+            new_nodes.append(TextNode(text[last_index:], TextType.NORMAL))
+        else:
+            new_nodes.append(TextNode("", TextType.NORMAL))
+
+    return new_nodes
+
+
+def split_nodes_link(old_nodes):
+    new_nodes = []
+    link_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
+
+    for node in old_nodes:
+        if node.text_type != TextType.NORMAL:
+            new_nodes.append(node)
+            continue
+
+        text = node.text
+        matches = list(re.finditer(link_pattern, text))
+        if not matches:
+            new_nodes.append(node)
+            continue
+
+        last_index = 0
+        for match in matches:
+            start, end = match.span()
+            anchor_text, url = match.groups()
+
+            # Add the text before the match
+            if start > last_index:
+                new_nodes.append(TextNode(text[last_index:start], TextType.NORMAL))
+
+            # Add the link node
+            new_nodes.append(TextNode(anchor_text, TextType.LINK, url))
+
+            # Update the last index
+            last_index = end
+
+        # Add any remaining text after the last match
+        if last_index < len(text):
+            new_nodes.append(TextNode(text[last_index:], TextType.NORMAL))
+        else:
+            new_nodes.append(TextNode("", TextType.NORMAL))
+
+    return new_nodes
+
