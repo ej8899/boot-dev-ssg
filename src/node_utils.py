@@ -1,6 +1,7 @@
 import re
 from textnode import TextNode, TextType
 
+
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     new_nodes = []
 
@@ -109,3 +110,24 @@ def split_nodes_link(old_nodes):
 
     return new_nodes
 
+
+def text_to_textnodes(text):
+    # Start with a single TextNode
+    nodes = [TextNode(text, TextType.NORMAL)]
+    
+    # Split images first (highest priority)
+    nodes = split_nodes_image(nodes)
+    
+    # Split links
+    nodes = split_nodes_link(nodes)
+    
+    # Split inline code
+    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+    
+    # Split bold
+    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+    
+    # Split italic
+    nodes = split_nodes_delimiter(nodes, "*", TextType.ITALIC)
+    
+    return nodes
